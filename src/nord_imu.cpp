@@ -20,6 +20,7 @@ class IMUReader
 		imu_sub = n.subscribe("/imu/data", 1, &IMUReader::IMUOrientationCallback, this);
 		values_pub = n.advertise<nord_messages::IMUValues>("/imu/calc_data", 1);
 		
+		//setting all values in the arrays to 0
 		for(int i = 0; i<4; i++){
 			q[i] = 0;
 			if(i<3){
@@ -37,13 +38,16 @@ class IMUReader
 
 	void IMUOrientationCallback(const sensor_msgs::Imu values)
 	{
+		//Gettin the quaternions
 		q[0] = values.orientation.w; q[1] = values.orientation.x;
 		q[2] = values.orientation.y; q[3] = values.orientation.z;
 		
+		//Getting the angular velocities from imu
 		w_pitch = values.angular_velocity.x;
 		w_slope = values.angular_velocity.y;
 		w_rotation = values.angular_velocity.z;
 
+		//Getting the raw acc data from IMU
 		a[0] =  values.linear_acceleration.x;
 		a[1] =  values.linear_acceleration.y;
 		a[2] =  values.linear_acceleration.z;
@@ -51,8 +55,10 @@ class IMUReader
 		removeGravity();
 		transformIntoRad();
 		detectBump();
-		rosPrint();
+		rosPrint(); //Turn off when code has been validated
+					//comments slow down the processing
 
+		//assigning all the correct values to the publisher
 		robot.direction   = rad_yaw;
 		robot.acc_forward = a[1];
 		robot.acc_right   = a[0];
@@ -66,20 +72,24 @@ class IMUReader
 		gravity[1]  = 2*(q[0]*q[1]+q[2]*q[3]);
 		gravity[2]  = pow(q[0],2.0) - pow(q[1],2.0) - pow(q[2],2.0) + pow(q[3],2.0);
 		
-		a[0] -= gravity[0]*9.81;
-		a[1] -= gravity[1]*9.81;
-		a[2] -= gravity[2]*9.81;
+		a[0] -= gravity[0]*9.81; //removes gravity from the long side
+		a[1] -= gravity[1]*9.81; //removes gravity from the short side
+		a[2] -= gravity[2]*9.81; //removes gravity from the flat side
 
 	}
 
 	void transformIntoRad(){
 		
-		rad_roll  = atan2(2*(q[2]*q[0]-q[1]*q[3]),1-2*(q[1]*q[1]+q[2]*q[2]));
-		rad_pitch =	asin(2*(q[1]*q[2]+q[3]*q[0]));
+		// rad_roll  = atan2(2*(q[2]*q[0]-q[1]*q[3]),1-2*(q[1]*q[1]+q[2]*q[2]));
+		// rad_pitch =	asin(2*(q[1]*q[2]+q[3]*q[0]));
+		//Returns the angle the robot will be looking in
+		//WARNING value shifts from 3.14 to minus -3.14 as soon as yo go above 180 deg
 		rad_yaw   = atan2(2*(q[0]*q[3]+q[1]*q[2]),1-2*(q[2]*q[2]+q[3]*q[3]));
 
 	}
 
+	//This is Beta, we have not decided what we should send, how we should handle it
+	//or calibrated the function yet. NEEDS FIXING!
 	void detectBump(){
 		if(std::abs(a[1]-old_a[1]) > 1.7 | std::abs(a[2]-old_a[2])> 2.5)
 		{
@@ -118,7 +128,7 @@ class IMUReader
 
 	// pitch =  /  down = +
 	// slope = turn around the cord  right = +
-	// rotation = around the pcb normal  right = + 
+	// yaw = around the pcb normal  right = + 
 
 	private:
 		double q[4]; double gravity[3]; double a[3]; //acceleration
@@ -134,7 +144,7 @@ int main(int argc,char** argv){
 	ros::init(argc, argv, "nord_IMU");
 	IMUReader object;
 
-	ros::Rate loop_rate(20); //ändra senare
+	ros::Rate loop_rate(20); //atm it updates in 20 hz
 
 	while(ros::ok())
 	{
