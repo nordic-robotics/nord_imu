@@ -5,6 +5,7 @@
 #include <cmath>
 #include "sensor_msgs/Imu.h"
 #include "nord_messages/IMUValues.h"
+#include "nord_messages/Vector2.h"
 
 class IMUReader
 {
@@ -12,6 +13,7 @@ class IMUReader
 	public:
 	ros::Subscriber imu_sub;
 	ros::Publisher values_pub;	
+	ros::Publisher bump_pub;	
 	ros::NodeHandle n;
 	nord_messages::IMUValues robot;
 
@@ -19,6 +21,7 @@ class IMUReader
 	{
 		imu_sub = n.subscribe("/imu/data", 1, &IMUReader::IMUOrientationCallback, this);
 		values_pub = n.advertise<nord_messages::IMUValues>("/imu/calc_data", 1);
+		bump_pub = n.advertise<nord_messages::Vector2>("/imu/bump", 1);
 		
 		//setting all values in the arrays to 0
 		for(int i = 0; i<4; i++){
@@ -97,6 +100,10 @@ class IMUReader
 			bump_array[1] = a[2]-old_a[2];
 			ROS_INFO("___________BUMP__________");
 			ROS_INFO("bump_array[ %f, %f]", bump_array[0],bump_array[1]);
+			nord_messages::Vector2 msg;
+			msg.x = bump_array[0];
+			msg.y = bump_array[1];
+			bump_pub.publish(msg);
 		}
 
 		for(int i = 0; i < 3; i++){
