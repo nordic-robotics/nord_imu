@@ -94,7 +94,9 @@ class IMUReader
 	//This is Beta, we have not decided what we should send, how we should handle it
 	//or calibrated the function yet. NEEDS FIXING!
 	void detectBump(){
-		if(std::abs(a[1]-old_a[1]) > 1.7 | std::abs(a[2]-old_a[2])> 2.5)
+		float dx = a[1] - old_a[1];
+		float dy = a[2] - old_a[2];
+		if(std::sqrt(dx * dx + dy * dy) > 6)
 		{
 			bump_array[0] = a[1]-old_a[1];
 			bump_array[1] = a[2]-old_a[2];
@@ -119,12 +121,12 @@ class IMUReader
 		// ROS_INFO("gravity x   = %f ", gravity[0]);
 		// ROS_INFO("gravity y   = %f ", gravity[1]);
 		// ROS_INFO("gravity z   = %f ", gravity[2]);
-		ROS_INFO("acc_right   = %f ", a[0]);
-		ROS_INFO("acc_forward = %f ", a[1]);
-		ROS_INFO("acc_upp     = %f ", a[2]);
+		//ROS_INFO("acc_right   = %f ", a[0]);
+		//ROS_INFO("acc_forward = %f ", a[1]);
+		//ROS_INFO("acc_upp     = %f ", a[2]);
 		// ROS_INFO("rad_roll  = %f ", rad_roll);
 		// ROS_INFO("rad_pitch = %f ", rad_pitch);
-		ROS_INFO("rad_yaw   = %f ", rad_yaw);
+		//ROS_INFO("rad_yaw   = %f ", rad_yaw);
 
 	}
 
